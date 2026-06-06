@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+.env
+*.db
+*.sqlite
+npm-debug.log*

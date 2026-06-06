@@ -1,0 +1,69 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ingest-service
+      - alert-service
+
+  ingest-service:
+    build: .
+    environment:
+      SERVICE: ingest
+      PORT: 3001
+      NASA_API_KEY: ${NASA_API_KEY:-DEMO_KEY}
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      GST_QUEUE: space-weather.gst
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  alert-service:
+    build: .
+    environment:
+      SERVICE: alert
+      PORT: 3002
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      GST_QUEUE: space-weather.gst
+      REDIS_URL: redis://redis:6379
+      ALERTS_CACHE_TTL_SECONDS: 60
+      DB_PATH: /data/alerts.db
+    volumes:
+      - alert-data:/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+
+  k6:
+    image: grafana/k6:latest
+    profiles:
+      - test
+    environment:
+      BASE_URL: http://nginx
+    volumes:
+      - ./k6:/scripts:ro
+    command: ["run", "/scripts/smoke.js"]
+    depends_on:
+      nginx:
+        condition: service_started
+
+volumes:
+  alert-data:
