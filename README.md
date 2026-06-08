@@ -1,3 +1,13 @@
+## Integrantes do grupo
+
+| Nome | RM |
+|------|----|
+| Diogo Witzel | RM552754 |
+| Lucas Domingues | RM553304 |
+| Victor Morelli | RM553338 |
+
+---
+
 # Solar Shield - Sistema de Monitoramento de Clima Espacial
 
 Sistema de microsserviços que ingere dados reais da NASA DONKI, classifica riscos de tempestades geomagnéticas e disponibiliza alertas para operadores de infraestrutura crítica.
